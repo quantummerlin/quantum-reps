@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>QUANTUM REPS TESTS</title>
+  <style>
+    body { font-family: monospace; background: #0B0B1A; color: #F4F4F4; padding: 16px; }
+    .pass { color: #39FF14; }
+    .fail { color: #FF3B30; }
+  </style>
+</head>
+<body>
+  <h1>QUANTUM REPS TESTS</h1>
+  <pre id="out"></pre>
+  <script type="module">
+    import { volumeLoad, validateSession, weightAdvice } from '../js/modules/logger.js';
+    import { evaluate, latestTrend, volumeDelta } from '../js/modules/progress.js';
+    import { localDay, currentCount, addProtein, proteinStatus, proteinLevel } from '../js/modules/protein.js';
+    import { scalePoints } from '../js/modules/chart.js';
+    import { sanitizeExercise, sanitizeExercises, sanitizeSettings, sanitizeProtein } from '../js/modules/schema.js';
+    import { buildBackup, parseBackup } from '../js/modules/backup.js';
+    import { volumeSeries, bestVolume } from '../js/modules/stats.js';
+    import { journalEntries, groupByDay, dayLabel, recentExercises } from '../js/modules/journal.js';
+    import { load, save, remove } from '../js/modules/storage.js';
+    import { toKg, fromKg, formatWeight, convertField } from '../js/modules/units.js';
+    import { epley1RM, weightForReps, repTable, validateCalc, nearestHalf } from '../js/modules/calc.js';
+
+    const out = document.getElementById('out');
+    let failed = 0;
+    const eq = (name, actual, expected) => {
+      const ok = JSON.stringify(actual) === JSON.stringify(expected);
+      if (!ok) failed++;
+      const line = document.createElement('div');
+      line.className = ok ? 'pass' : 'fail';
+      line.textContent = `${ok ? 'PASS' : 'FAIL'} ${name}${ok ? '' : ` (got ${JSON.stringify(actual)}, want ${JSON.stringify(expected)})`}`;
+      out.append(line);
+    };
+
+    const s = (weight, sets) => ({ weight, sets });
+
+    eq('volumeLoad', volumeLoad(s(10, [12, 9, 7])), 280);
+
+    eq('validate ok', validateSession(s(10, [12, 9, 7])), null);
+    eq('validate zero weight', validateSession(s(0, [12, 9, 7])) !== null, true);
+    eq('validate NaN weight', validateSession(s(NaN, [12, 9, 7])) !== null, true);
+    eq('validate empty rep', validateSession(s(10, [12, 0, 7])) !== null, true);
+    eq('validate fractional rep', validateSession(s(10, [12, 9.5, 7])) !== null, true);
+    eq('validate two sets', validateSession(s(10, [12, 9])) !== null, true);
+
+    eq('advice heavy', weightAdvice([7, 5, 4]), 'heavy');
+    eq('advice light', weightAdvice([35, 32, 30]), 'light');
+    eq('advice ok', weightAdvice([12, 9, 7]), 'ok');
+
+    const first = s(10, [12, 9, 7]);
+    eq('trend baseline', evaluate([], first), 'baseline');
+    eq('trend regressed', evaluate([first], s(10, [11, 9, 7])), 'regressed');
+    eq('trend same', evaluate([first], s(10, [12, 9, 7])), 'same');
+    eq('trend record', evaluate([first], s(10, [13, 9, 7])), 'record');
+    eq('trend improved below earlier best', evaluate([s(10, [20, 15, 10]), s(10, [12, 9, 7])], s(10, [13, 9, 7])), 'improved');
+    eq('trend heavier weight counts', evaluate([first], s(12, [10, 8, 6])), 'record');
+    eq('latestTrend empty', latestTrend([]), null);
+    eq('latestTrend', latestTrend([first, s(10, [11, 9, 7])]), 'regressed');
+
+    eq('localDay format', /^\d{4}-\d{2}-\d{2}$/.test(localDay(new Date(2026, 0, 5))), true);
+    eq('localDay value', localDay(new Date(2026, 0, 5)), '2026-01-05');
+    eq('protein stale day', currentCount({ date: '2026-01-04', count: 100 }, '2026-01-05'), 0);
+    eq('protein add', addProtein({ date: '2026-01-05', count: 50 }, '2026-01-05', 25).count, 75);
+    eq('protein new day resets', addProtein({ date: '2026-01-04', count: 100 }, '2026-01-05', 25).count, 25);
+    eq('protein floor', addProtein(null, '2026-01-05', -25).count, 0);
+    eq('status low', proteinStatus(134), 'BELOW TARGET');
+    eq('status min', proteinStatus(135), 'ON TARGET');
+    eq('status max', proteinStatus(170), 'ON TARGET');
+    eq('status over', proteinStatus(171), 'OVER TARGET');
+    eq('level below', proteinLevel(0), 'below');
+    eq('level on', proteinLevel(150), 'on');
+    eq('level over', proteinLevel(200), 'over');
+
+    eq('delta up', volumeDelta(100, 110), 10);
+    eq('delta down', volumeDelta(100, 90), -10);
+    eq('delta no baseline', volumeDelta(0, 90), null);
+
+    eq('scalePoints empty', scalePoints([], 100, 50), []);
+    eq('scalePoints flat centered', scalePoints([5, 5], 100, 50).map((p) => p.y), [25, 25]);
+    eq('scalePoints min bottom max top', scalePoints([1, 3], 100, 50, 8).map((p) => p.y), [42, 8]);
+    eq('scalePoints single centered x', scalePoints([4], 100, 50)[0].x, 50);
+
+    const goodSession = { date: '2026-10-25T10:00:00Z', weight: 20, sets: [12, 9, 7] };
+    const goodExercise = { id: 'a', name: 'Press', weight: 20, bodyPart: 'CHEST', notes: 'n', sessions: [goodSession] };
+    eq('sanitize keeps valid', sanitizeExercise(goodExercise).sessions.length, 1);
+    eq('sanitize adds technique', sanitizeExercise(goodExercise).technique, { contraction: '', stretch: '' });
+    eq('sanitize rejects no name', sanitizeExercise({ ...goodExercise, name: '  ' }), null);
+    eq('sanitize rejects bad weight', sanitizeExercise({ ...goodExercise, weight: -1 }), null);
+    eq('sanitize bad body part', sanitizeExercise({ ...goodExercise, bodyPart: 'X' }).bodyPart, 'OTHER');
+    eq('sanitize drops bad sessions', sanitizeExercise({ ...goodExercise, sessions: [goodSession, { ...goodSession, sets: [1, 2] }, null] }).sessions.length, 1);
+    eq('sanitize drops duplicate ids', sanitizeExercises([goodExercise, goodExercise]).length, 1);
+    eq('sanitize non-array', sanitizeExercises('nope'), []);
+    eq('settings defaults', sanitizeSettings(null), { unit: 'kg', goal: '' });
+    eq('settings rejects bad unit', sanitizeSettings({ unit: 'stone' }).unit, 'kg');
+    eq('settings ignores old fields', sanitizeSettings({ unit: 'lb', rest: 120, sound: false }), { unit: 'lb', goal: '' });
+    eq('settings trims goal', sanitizeSettings({ goal: '  go  ' }).goal, 'go');
+    eq('protein valid', sanitizeProtein({ date: '2026-01-05', count: 50 }), { date: '2026-01-05', count: 50 });
+    eq('protein invalid', sanitizeProtein({ date: 'x', count: 50 }), null);
+    eq('protein negative', sanitizeProtein({ date: '2026-01-05', count: -1 }), null);
+
+    const backup = buildBackup({ exercises: [goodExercise], settings: sanitizeSettings({}), protein: null });
+    const parsed = parseBackup(JSON.stringify(backup));
+    eq('backup roundtrip ok', parsed.ok, true);
+    eq('backup roundtrip exercises', parsed.data.exercises.length, 1);
+    eq('backup rejects garbage', parseBackup('{nope').ok, false);
+    eq('backup rejects wrong app', parseBackup(JSON.stringify({ app: 'other', version: 1, exercises: [] })).ok, false);
+    eq('backup rejects wrong version', parseBackup(JSON.stringify({ ...backup, version: 99 })).ok, false);
+    eq('backup sanitizes content', parseBackup(JSON.stringify({ ...backup, exercises: [{ id: 'z', name: '', weight: 5 }, goodExercise] })).data.exercises.length, 1);
+
+    const ex2 = { ...goodExercise, sessions: [goodSession, { ...goodSession, sets: [13, 9, 7] }] };
+    eq('volumeSeries', volumeSeries(ex2), [560, 580]);
+    eq('bestVolume', bestVolume(ex2), 580);
+    eq('bestVolume empty', bestVolume({ sessions: [] }), 0);
+
+    const at = (d, h) => new Date(2026, 9, d, h).toISOString();
+    const press = { id: 'p', name: 'Press', weight: 20, sessions: [
+      { date: at(20, 9), weight: 20, sets: [12, 9, 7] },
+      { date: at(25, 9), weight: 20, sets: [13, 9, 7] },
+    ] };
+    const row = { id: 'r', name: 'Row', weight: 30, sessions: [{ date: at(25, 18), weight: 30, sets: [10, 8, 6] }] };
+    const idle = { id: 'i', name: 'Idle', weight: 5, sessions: [] };
+    const entries = journalEntries([press, row, idle]);
+    eq('journal newest first', entries.map((e) => `${e.exercise.name}${e.index}`), ['Row0', 'Press1', 'Press0']);
+    eq('journal trends', entries.map((e) => e.trend), ['baseline', 'record', 'baseline']);
+    eq('journal groups by day', groupByDay(entries).map((g) => g.entries.length), [2, 1]);
+    eq('journal empty', journalEntries([idle]), []);
+    eq('dayLabel today', dayLabel('2026-10-25', '2026-10-25'), 'Today');
+    eq('dayLabel yesterday', dayLabel('2026-10-24', '2026-10-25'), 'Yesterday');
+    eq('dayLabel month boundary', dayLabel('2026-09-30', '2026-10-01'), 'Yesterday');
+    eq('dayLabel older is a date', ['Today', 'Yesterday'].includes(dayLabel('2026-10-20', '2026-10-25')), false);
+    eq('recent order', recentExercises([idle, press, row], 3).map((e) => e.name), ['Row', 'Press', 'Idle']);
+    eq('recent limit', recentExercises([idle, press, row], 1).map((e) => e.name), ['Row']);
+
+    eq('epley single rep is the weight', epley1RM(100, 1), 100);
+    eq('epley 80 x 10', Math.round(epley1RM(80, 10) * 10) / 10, 106.7);
+    eq('epley inverse', Math.round(weightForReps(epley1RM(80, 10), 10) * 1000) / 1000, 80);
+    eq('inverse single rep', weightForReps(100, 1), 100);
+    eq('repTable rows', repTable(100).map((r) => r.reps), [5, 8, 10, 12, 15, 20, 25, 30]);
+    eq('repTable heavier at fewer reps', repTable(100)[0].weight > repTable(100)[7].weight, true);
+    eq('calc valid', validateCalc({ weight: 80, reps: 10 }), null);
+    eq('calc rejects zero weight', validateCalc({ weight: 0, reps: 10 }) !== null, true);
+    eq('calc rejects zero reps', validateCalc({ weight: 80, reps: 0 }) !== null, true);
+    eq('calc rejects 31 reps', validateCalc({ weight: 80, reps: 31 }) !== null, true);
+    eq('calc rejects fractional reps', validateCalc({ weight: 80, reps: 8.5 }) !== null, true);
+    eq('nearestHalf kg down', nearestHalf(84.21, 'kg'), 84);
+    eq('nearestHalf kg up', nearestHalf(33.3, 'kg'), 33.5);
+    eq('nearestHalf lb', fromKg(nearestHalf(toKg(77.3, 'lb'), 'lb'), 'lb'), 77.5);
+
+    eq('kg passthrough', toKg(20, 'kg'), 20);
+    eq('lb to kg', Math.round(toKg(45, 'lb') * 1000) / 1000, 20.412);
+    eq('lb roundtrip', fromKg(toKg(45, 'lb'), 'lb'), 45);
+    eq('kg to lb display', fromKg(20, 'lb'), 44.1);
+    eq('format kg', formatWeight(20, 'kg'), '20 KG');
+    eq('format lb', formatWeight(toKg(135, 'lb'), 'lb'), '135 LB');
+    eq('convertField kg to lb', convertField('20', 'kg', 'lb'), 44.1);
+    eq('convertField blank', convertField('', 'kg', 'lb'), '');
+    eq('convertField invalid', convertField('abc', 'kg', 'lb'), '');
+
+    save('__test', { a: 1 });
+    eq('storage roundtrip', load('__test', null), { a: 1 });
+    remove('__test');
+    eq('storage missing fallback', load('__test', 'fallback'), 'fallback');
+    localStorage.setItem('qreps.__bad', '{not json');
+    eq('storage corrupt fallback', load('__bad', 'fallback'), 'fallback');
+    localStorage.removeItem('qreps.__bad');
+
+    const summary = document.createElement('div');
+    summary.className = failed ? 'fail' : 'pass';
+    summary.textContent = failed ? `${failed} FAILED` : 'ALL PASSED';
+    out.append(summary);
+  </script>
+</body>
+</html>

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0B0B1A">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'none'; base-uri 'none'">
+  <title>Quantum Reps</title>
+  <link rel="icon" href="assets/emblem-32.png">
+  <link rel="stylesheet" href="css/style.css">
+  <script type="module" src="js/main.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <span id="brand-mark" class="brand-mark"></span>
+        <span class="brand-name">QUANTUM REPS</span>
+      </div>
+      <div class="segmented" role="group" aria-label="Weight unit">
+        <button class="seg-btn" type="button" data-unit="kg" aria-pressed="true">KG</button>
+        <button class="seg-btn" type="button" data-unit="lb" aria-pressed="false">LB</button>
+      </div>
+    </div>
+    <div class="protein-bar" data-level="below">
+      <span class="label protein-label">PROTEIN</span>
+      <progress id="protein-progress" max="135" value="0" aria-label="Progress toward the daily protein minimum"></progress>
+      <span class="protein-readout"><span id="protein-count">0</span><span class="protein-target">/135G</span></span>
+      <button id="protein-undo" class="btn btn-ghost btn-small" type="button" aria-label="Remove 25 grams of protein">-25</button>
+      <button id="protein-add" class="btn btn-small" type="button" aria-label="Add 25 grams of protein">+25</button>
+      <span id="protein-status" class="sr-only" role="status"></span>
+    </div>
+  </header>
+
+  <div class="shell">
+    <nav class="nav" aria-label="Primary">
+      <button class="nav-btn" type="button" data-tab="log"><span class="nav-icon"></span><span class="nav-label">JOURNAL</span></button>
+      <button class="nav-btn" type="button" data-tab="exercises"><span class="nav-icon"></span><span class="nav-label">EXERCISES</span></button>
+      <button class="nav-btn" type="button" data-tab="calc"><span class="nav-icon"></span><span class="nav-label">1RM</span></button>
+      <button class="nav-btn" type="button" data-tab="more"><span class="nav-icon"></span><span class="nav-label">MORE</span></button>
+    </nav>
+
+    <main class="content" id="main">
+      <section id="tab-log" class="view"></section>
+      <section id="tab-exercises" class="view" hidden></section>
+      <section id="tab-calc" class="view" hidden></section>
+      <section id="tab-more" class="view" hidden></section>
+    </main>
+  </div>
+
+  <dialog id="exercise-dialog" aria-labelledby="exercise-dialog-title">
+    <form id="exercise-form" class="card" novalidate>
+      <h2 id="exercise-dialog-title" class="dialog-title">EXERCISE</h2>
+      <div id="exercise-chart"></div>
+      <p id="exercise-stats" class="muted"></p>
+      <label class="field"><span class="field-label">Name</span>
+        <input name="name" type="text" maxlength="40" autocomplete="off">
+      </label>
+      <label class="field"><span class="field-label">Body part</span>
+        <select name="bodyPart"></select>
+      </label>
+      <label class="field"><span class="field-label">Notes</span>
+        <textarea name="notes" rows="3" maxlength="500"></textarea>
+      </label>
+      <details id="technique" class="technique">
+        <summary>Technique</summary>
+        <label class="field"><span class="field-label">Max contraction point</span>
+          <input name="contraction" type="text" maxlength="140" autocomplete="off">
+        </label>
+        <label class="field"><span class="field-label">Muscle stretch focus</span>
+          <input name="stretch" type="text" maxlength="140" autocomplete="off">
+        </label>
+      </details>
+      <p id="exercise-error" class="error" role="alert"></p>
+      <div class="dialog-actions">
+        <button id="exercise-delete" class="btn btn-danger" type="button">DELETE</button>
+        <button id="exercise-cancel" class="btn btn-ghost" type="button">CLOSE</button>
+        <button class="btn" type="submit">SAVE</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="goal-dialog" aria-labelledby="goal-dialog-title">
+    <form method="dialog" class="card">
+      <h2 id="goal-dialog-title" class="dialog-title">GOAL</h2>
+      <textarea id="goal-input" rows="3" maxlength="140" aria-label="Goal"></textarea>
+      <div class="dialog-actions">
+        <button class="btn btn-ghost" value="cancel">CANCEL</button>
+        <button class="btn" value="save">SAVE</button>
+      </div>
+    </form>
+  </dialog>
+</body>
+</html>
