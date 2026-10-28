@@ -10,7 +10,7 @@ import { fromKg, toKg } from '../modules/units.js';
 import { h, icon } from '../modules/ui.js';
 import { refresh } from '../nav.js';
 import { openGoalDialog } from './dialogs.js';
-import { $, badge, unit, viewTitle, weightText } from './shared.js';
+import { $, badge, mount, unit, viewTitle, weightText } from './shared.js';
 
 const PAGE = 30;
 const blank = () => ({ name: '', weightKg: null, weightTouched: false, sets: ['', '', ''] });
@@ -43,13 +43,15 @@ function updatePreview() {
   const session = currentSession();
   if (validateSession(session)) {
     const entered = draft.sets.filter((value) => value !== '').length;
-    els.preview.textContent = entered ? `${entered} of ${SETS_PER_EXERCISE} sets entered` : '';
+    els.preview.textContent = entered ? `${entered} of ${SETS_PER_EXERCISE} sets entered` : 'Enter all three failure sets to see your volume.';
+    els.preview.className = 'preview is-hint';
     els.advice.textContent = '';
     return;
   }
   const load = volumeLoad(session);
   const last = matched()?.sessions.at(-1);
   const delta = last ? volumeDelta(volumeLoad(last), load) : null;
+  els.preview.className = 'preview';
   els.preview.textContent = `Volume ${weightText(load)}${delta === null ? '' : ` (${signed(delta)} vs last)`}`;
   els.advice.textContent = ADVICE_TEXT[weightAdvice(session.sets)];
 }
@@ -210,7 +212,7 @@ function logForm() {
           onClick: () => pick(exercise),
         }, exercise.name)))
       : null,
-    h('p', { class: 'muted' }, `Do 3 sets to failure at one weight. Aim for ${MIN_REPS}-${MAX_REPS} reps each.`),
+    h('p', { class: 'muted' }, `3 sets to failure, same weight. Aim for ${MIN_REPS}-${MAX_REPS} reps.`),
     h('div', { class: 'sets' }, weightControl(), ...[0, 1, 2].map(repStepper)),
     els.preview,
     els.advice,
@@ -275,7 +277,7 @@ function journal() {
 
 export function render() {
   const goal = settings.get().goal;
-  $('#tab-log').replaceChildren(
+  mount($('#tab-log'),
     viewTitle('JOURNAL'),
     goal
       ? h('button', { class: 'goal-line', type: 'button', onClick: openGoalDialog },

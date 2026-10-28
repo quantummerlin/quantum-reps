@@ -5,6 +5,11 @@ import { h, icon } from '../modules/ui.js';
 
 export const $ = (selector) => document.querySelector(selector);
 
+// replaceChildren would print null or false children as the text "null".
+export function mount(root, ...children) {
+  root.replaceChildren(...children.flat().filter((child) => child != null && child !== false));
+}
+
 export const unit = () => settings.get().unit;
 
 export const weightText = (kg) => formatWeight(kg, unit());
