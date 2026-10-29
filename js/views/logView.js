@@ -10,7 +10,7 @@ import { fromKg, toKg } from '../modules/units.js';
 import { h, icon } from '../modules/ui.js';
 import { refresh } from '../nav.js';
 import { openGoalDialog } from './dialogs.js';
-import { $, badge, mount, unit, viewTitle, weightText } from './shared.js';
+import { $, badge, formatTime, mount, unit, viewTitle, weightText } from './shared.js';
 
 const PAGE = 30;
 const blank = () => ({ name: '', weightKg: null, weightTouched: false, sets: ['', '', ''] });
@@ -245,6 +245,7 @@ function entryRow({ exercise, index, session, trend }) {
     h('div', { class: 'entry-main' },
       h('p', { class: 'entry-name' }, exercise.name),
       h('p', { class: 'entry-sets' }, `${weightText(session.weight)} x ${session.sets.join(' / ')}`)),
+    h('time', { class: 'entry-time', datetime: session.date }, formatTime(session.date)),
     h('button', {
       class: 'icon-btn',
       type: 'button',

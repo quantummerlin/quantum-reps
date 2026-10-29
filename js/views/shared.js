@@ -14,6 +14,9 @@ export const unit = () => settings.get().unit;
 
 export const weightText = (kg) => formatWeight(kg, unit());
 
+// Entries are stored as UTC timestamps and shown in the device's own time zone.
+export const formatTime = (iso) => new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+
 export function badge(trend, px = 20) {
   return h('span', { class: `badge badge-${trend}` }, icon(TREND_ICON[trend], px), TREND_LABEL[trend]);
 }
