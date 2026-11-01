@@ -23,7 +23,7 @@
     import { journalEntries, groupByDay, dayLabel, recentExercises } from '../js/modules/journal.js';
     import { load, save, remove } from '../js/modules/storage.js';
     import { toKg, fromKg, formatWeight, convertField } from '../js/modules/units.js';
-    import { epley1RM, weightForReps, repTable, validateCalc, nearestHalf, needsHeavierWeight, maxForReps, validateTarget, TARGET_CHIPS } from '../js/modules/calc.js';
+    import { epley1RM, weightForReps, repTable, validateCalc, nearestHalf, needsHeavierWeight, maxForReps, validateTarget, TARGET_CHIPS, totalWeight } from '../js/modules/calc.js';
 
     const out = document.getElementById('out');
     let failed = 0;
@@ -162,6 +162,9 @@
     eq('target rejects fraction', validateTarget(2.5) !== null, true);
     eq('target rejects NaN', validateTarget(NaN) !== null, true);
     eq('chips start at 1', TARGET_CHIPS[0], 1);
+    eq('total mode leaves weight alone', totalWeight(40, 'total'), 40);
+    eq('each hand doubles the weight', totalWeight(40, 'each'), 80);
+    eq('each hand doubles a fraction', totalWeight(22.5, 'each'), 45);
     eq('calc rejects fractional reps', validateCalc({ weight: 80, reps: 8.5 }) !== null, true);
     eq('nearestHalf kg down', nearestHalf(84.21, 'kg'), 84);
     eq('nearestHalf kg up', nearestHalf(33.3, 'kg'), 33.5);

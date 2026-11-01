@@ -1,5 +1,6 @@
 import {
-  TABLE_REPS, TARGET_CHIPS, epley1RM, maxForReps, nearestHalf, needsHeavierWeight, repTable, validateCalc, validateTarget,
+  TABLE_REPS, TARGET_CHIPS, epley1RM, maxForReps, nearestHalf, needsHeavierWeight, repTable, totalWeight,
+  validateCalc, validateTarget,
 } from '../modules/calc.js';
 import { fromKg, toKg } from '../modules/units.js';
 import { h } from '../modules/ui.js';
@@ -7,9 +8,14 @@ import { go } from '../nav.js';
 import { prefillWeight } from './logView.js';
 import { $, unit, viewTitle, weightText } from './shared.js';
 
-// target is the rep count whose max is shown; 1 gives the classic one rep max.
-const draft = { weightKg: null, reps: '', target: '1' };
-const els = { chips: [] };
+const CUSTOM = 'custom';
+
+// target is the rep count whose max is shown (1 is the classic one rep max).
+// mode 'each' treats the entered weight as one dumbbell, with one in each hand.
+const draft = { weightKg: null, reps: '', target: '1', custom: false, mode: 'total' };
+const els = {};
+
+const isEach = () => draft.mode === 'each';
 
 function useWeight(kg) {
   prefillWeight(kg);
@@ -22,18 +28,14 @@ function targetRows(oneRM) {
     return h('li', { class: 'rep-row' },
       h('span', { class: 'rep-count' }, `${reps} reps`),
       h('span', { class: 'rep-weight' }, weightText(suggested)),
+      isEach() ? h('span', { class: 'rep-total' }, `${weightText(totalWeight(suggested, draft.mode))} total`) : null,
       h('button', {
         class: 'btn btn-small btn-ghost',
         type: 'button',
-        'aria-label': `Use ${weightText(suggested)} for ${reps} reps in the journal`,
+        'aria-label': `Use ${weightText(suggested)}${isEach() ? ' in each hand' : ''} for ${reps} reps in the journal`,
         onClick: () => useWeight(suggested),
       }, 'USE'));
   });
-}
-
-function updateChips() {
-  const target = Number(draft.target);
-  els.chips.forEach((chip) => chip.setAttribute('aria-pressed', String(Number(chip.dataset.reps) === target)));
 }
 
 function showResult() {
@@ -41,9 +43,11 @@ function showResult() {
   const target = Number(draft.target);
   const targetProblem = validateTarget(target);
   const problem = validateCalc(input);
-  els.label.textContent = targetProblem ? 'YOUR REP MAX' : `YOUR ${target} REP MAX`;
+  const suffix = isEach() ? ' (EACH HAND)' : '';
+  els.label.textContent = targetProblem ? `YOUR REP MAX${suffix}` : `YOUR ${target} REP MAX${suffix}`;
   els.targets.hidden = Boolean(problem);
   els.use.hidden = true;
+  els.total.hidden = true;
   els.note.className = 'calc-note';
 
   if (problem || targetProblem) {
@@ -60,12 +64,16 @@ function showResult() {
   els.value.replaceChildren(
     h('span', { class: 'calc-number' }, fromKg(result, unit())),
     h('span', { class: 'calc-unit' }, unit().toUpperCase()));
-  els.note.textContent = `Estimated from ${weightText(input.weight)} x ${input.reps}`;
+  els.total.hidden = !isEach();
+  els.total.textContent = `Total ${weightText(totalWeight(result, draft.mode))}`;
+  els.note.textContent = isEach()
+    ? `Estimated from ${weightText(input.weight)} in each hand x ${input.reps}`
+    : `Estimated from ${weightText(input.weight)} x ${input.reps}`;
   els.advice.textContent = needsHeavierWeight(input.reps)
     ? `${input.reps} reps, strong work. Move up a weight to keep progressing.`
     : '';
   els.use.hidden = false;
-  els.use.textContent = `LOG WITH ${weightText(suggested)}`;
+  els.use.textContent = `LOG WITH ${weightText(suggested)}${isEach() ? ' EACH HAND' : ''}`;
   els.use.onclick = () => useWeight(suggested);
   els.list.replaceChildren(...targetRows(epley1RM(input.weight, input.reps)));
 }
@@ -74,11 +82,64 @@ function numberField(label, control) {
   return h('label', { class: 'calc-field' }, h('span', { class: 'field-label' }, label), control);
 }
 
-function setTarget(value) {
-  draft.target = String(value);
-  els.targetInput.value = draft.target;
-  updateChips();
-  showResult();
+function targetPicker() {
+  const select = h('select', {
+    'aria-label': 'Show my max for',
+    onChange: (event) => {
+      draft.custom = event.target.value === CUSTOM;
+      if (draft.custom) {
+        els.targetInput.hidden = false;
+        els.targetInput.focus();
+        els.targetInput.select();
+      } else {
+        draft.target = event.target.value;
+        els.targetInput.value = draft.target;
+        els.targetInput.hidden = true;
+      }
+      showResult();
+    },
+  },
+  ...TARGET_CHIPS.map((reps) => h('option', {
+    value: reps,
+    selected: !draft.custom && Number(draft.target) === reps,
+  }, reps === 1 ? '1 rep max' : `${reps} rep max`)),
+  h('option', { value: CUSTOM, selected: draft.custom }, 'Other number of reps...'));
+
+  els.targetInput = h('input', {
+    class: 'target-input',
+    type: 'number',
+    inputmode: 'numeric',
+    min: 1,
+    step: 1,
+    placeholder: 'reps',
+    value: draft.target,
+    hidden: !draft.custom,
+    'aria-label': 'Custom target reps',
+    onInput: (event) => {
+      draft.target = event.target.value;
+      showResult();
+    },
+  });
+
+  return h('div', { class: 'field' },
+    h('span', { class: 'field-label' }, 'Show my max for'),
+    h('div', { class: 'target-row' }, select, els.targetInput));
+}
+
+function modePicker() {
+  const pick = (mode) => () => {
+    if (draft.mode === mode) return;
+    draft.mode = mode;
+    render();
+  };
+  return h('div', { class: 'field' },
+    h('span', { class: 'field-label' }, 'Weight type'),
+    h('div', { class: 'segmented mode-toggle', role: 'group', 'aria-label': 'Weight type' },
+      h('button', { class: 'seg-btn', type: 'button', 'aria-pressed': String(!isEach()), onClick: pick('total') }, 'TOTAL'),
+      h('button', { class: 'seg-btn', type: 'button', 'aria-pressed': String(isEach()), onClick: pick('each') }, 'EACH HAND')),
+    h('span', { class: 'hint' }, isEach()
+      ? 'Dumbbells: enter the weight of one dumbbell. Results show each hand and the total.'
+      : 'Enter the full weight lifted. Pick EACH HAND if you hold a dumbbell in each hand.'));
 }
 
 export function render() {
@@ -108,29 +169,9 @@ export function render() {
     },
   });
 
-  els.targetInput = h('input', {
-    class: 'target-input',
-    type: 'number',
-    inputmode: 'numeric',
-    min: 1,
-    step: 1,
-    value: draft.target,
-    'aria-label': 'Target reps',
-    onInput: (event) => {
-      draft.target = event.target.value;
-      updateChips();
-      showResult();
-    },
-  });
-  els.chips = TARGET_CHIPS.map((reps) => h('button', {
-    class: 'chip',
-    type: 'button',
-    'data-reps': reps,
-    onClick: () => setTarget(reps),
-  }, String(reps)));
-
   els.label = h('p', { class: 'label' }, 'YOUR 1 REP MAX');
   els.value = h('p', { class: 'calc-value', role: 'status' });
+  els.total = h('p', { class: 'calc-total', hidden: true });
   els.note = h('p', { class: 'calc-note' });
   els.advice = h('p', { class: 'advice calc-advice' });
   els.use = h('button', { class: 'btn btn-small btn-ghost calc-use', type: 'button', hidden: true });
@@ -143,22 +184,19 @@ export function render() {
   $('#tab-calc').replaceChildren(
     viewTitle('REP MAX'),
     h('section', { class: 'card calc-card' },
+      modePicker(),
       h('div', { class: 'calc-inputs' },
-        numberField(`Weight (${unit()})`, weight),
+        numberField(isEach() ? `Weight per hand (${unit()})` : `Weight (${unit()})`, weight),
         numberField('Reps', reps)),
-      h('div', { class: 'field' },
-        h('span', { class: 'field-label' }, 'Show my max for'),
-        h('div', { class: 'target-row' },
-          h('div', { class: 'chips target-chips', role: 'group', 'aria-label': 'Target reps' }, ...els.chips),
-          els.targetInput)),
+      targetPicker(),
       h('div', { class: 'calc-result' },
         els.label,
         els.value,
+        els.total,
         els.note,
         els.advice,
         els.use)),
     els.targets,
     h('p', { class: 'hint calc-foot' }, 'Estimated with the Epley formula.'));
-  updateChips();
   showResult();
 }

@@ -4,6 +4,9 @@ import { fromKg, toKg } from './units.js';
 export const TABLE_REPS = [5, 8, 10, 12, 15, 20, 25, 30];
 export const TARGET_CHIPS = [1, 3, 5, 8, 10, 12, 15, 20, 25, 30];
 
+// 'each' means a dumbbell in each hand, so the total is twice the per-hand weight.
+export const totalWeight = (weight, mode) => (mode === 'each' ? weight * 2 : weight);
+
 // Reaching this many reps is the cue to move up a weight.
 export const needsHeavierWeight = (reps) => reps >= MAX_REPS;
 
