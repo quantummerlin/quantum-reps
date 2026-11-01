@@ -47,7 +47,7 @@ function showResult() {
     h('span', { class: 'calc-unit' }, unit().toUpperCase()));
   els.note.textContent = `Estimated from ${weightText(input.weight)} x ${input.reps}`;
   els.advice.textContent = needsHeavierWeight(input.reps)
-    ? `${input.reps} reps is past the useful range. Move up a weight and test again for a more accurate max.`
+    ? `${input.reps} reps, strong work. Move up a weight to keep progressing.`
     : '';
   els.list.replaceChildren(...targetRows(oneRM));
 }
@@ -104,6 +104,6 @@ export function render() {
         els.note,
         els.advice)),
     els.targets,
-    h('p', { class: 'hint calc-foot' }, 'Epley formula. Most accurate under 12 reps and rougher beyond that.'));
+    h('p', { class: 'hint calc-foot' }, 'Estimated with the Epley formula.'));
   showResult();
 }

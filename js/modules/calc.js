@@ -3,7 +3,7 @@ import { fromKg, toKg } from './units.js';
 
 export const TABLE_REPS = [5, 8, 10, 12, 15, 20, 25, 30];
 
-// Past this many reps the weight is too light to give a useful max estimate.
+// Reaching this many reps is the cue to move up a weight.
 export const needsHeavierWeight = (reps) => reps >= MAX_REPS;
 
 export const epley1RM = (weight, reps) => (reps === 1 ? weight : weight * (1 + reps / 30));

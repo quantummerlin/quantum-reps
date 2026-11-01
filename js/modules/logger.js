@@ -6,7 +6,7 @@ export const MAX_WEIGHT = 1000;
 
 export const ADVICE_TEXT = {
   heavy: 'Too heavy: drop the weight next time.',
-  light: 'Too light: add weight next time.',
+  light: 'Strong set. Move up a weight next time.',
   ok: '',
 };
 
