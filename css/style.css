@@ -44,6 +44,7 @@ body {
 
 h1, h2, h3, p, ol, ul { margin: 0; }
 ol, ul { padding: 0; list-style: none; }
+[hidden] { display: none !important; }
 button, input, select, textarea { font: inherit; color: inherit; }
 button { -webkit-tap-highlight-color: transparent; }
 
@@ -450,6 +451,10 @@ input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; marg
 .calc-unit { font-family: var(--font-pixel); font-size: 11px; color: var(--text-dim); }
 .calc-note { min-height: 1.4em; color: var(--text-dim); font-size: 13px; }
 .calc-note.error { color: var(--red); }
+.calc-use { margin-top: 8px; }
+.target-row { display: grid; grid-template-columns: minmax(0, 1fr) 64px; gap: 8px; align-items: center; }
+.target-chips { min-width: 0; }
+.target-input { min-height: 34px; padding: 0 6px; text-align: center; font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums; }
 .calc-advice { max-width: 28ch; text-wrap: balance; }
 .calc-foot { text-align: center; }
 .targets { background: var(--surface); border: 1px solid var(--hairline); border-radius: var(--radius); padding: 2px 16px 10px; }

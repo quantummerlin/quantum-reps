@@ -23,7 +23,7 @@
     import { journalEntries, groupByDay, dayLabel, recentExercises } from '../js/modules/journal.js';
     import { load, save, remove } from '../js/modules/storage.js';
     import { toKg, fromKg, formatWeight, convertField } from '../js/modules/units.js';
-    import { epley1RM, weightForReps, repTable, validateCalc, nearestHalf, needsHeavierWeight } from '../js/modules/calc.js';
+    import { epley1RM, weightForReps, repTable, validateCalc, nearestHalf, needsHeavierWeight, maxForReps, validateTarget, TARGET_CHIPS } from '../js/modules/calc.js';
 
     const out = document.getElementById('out');
     let failed = 0;
@@ -150,6 +150,18 @@
     eq('heavier suggested at 30', needsHeavierWeight(30), true);
     eq('heavier suggested above 30', needsHeavierWeight(45), true);
     eq('no suggestion at 29', needsHeavierWeight(29), false);
+    eq('maxForReps 1 equals 1RM', Math.round(maxForReps(80, 10, 1) * 100) / 100, 106.67);
+    eq('maxForReps same reps returns the weight', Math.round(maxForReps(80, 10, 10) * 1000) / 1000, 80);
+    eq('maxForReps fewer reps is heavier', maxForReps(80, 10, 5) > maxForReps(80, 10, 10), true);
+    eq('maxForReps 5 reps', Math.round(maxForReps(80, 10, 5) * 10) / 10, 91.4);
+    eq('maxForReps 12 reps', Math.round(maxForReps(80, 10, 12) * 10) / 10, 76.2);
+    eq('maxForReps any target above 30', Math.round(maxForReps(80, 10, 100) * 10) / 10, 24.6);
+    eq('target valid', validateTarget(25), null);
+    eq('target valid very high', validateTarget(500), null);
+    eq('target rejects zero', validateTarget(0) !== null, true);
+    eq('target rejects fraction', validateTarget(2.5) !== null, true);
+    eq('target rejects NaN', validateTarget(NaN) !== null, true);
+    eq('chips start at 1', TARGET_CHIPS[0], 1);
     eq('calc rejects fractional reps', validateCalc({ weight: 80, reps: 8.5 }) !== null, true);
     eq('nearestHalf kg down', nearestHalf(84.21, 'kg'), 84);
     eq('nearestHalf kg up', nearestHalf(33.3, 'kg'), 33.5);

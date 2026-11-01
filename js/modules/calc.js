@@ -2,6 +2,7 @@ import { MAX_REPS, MAX_WEIGHT } from './logger.js';
 import { fromKg, toKg } from './units.js';
 
 export const TABLE_REPS = [5, 8, 10, 12, 15, 20, 25, 30];
+export const TARGET_CHIPS = [1, 3, 5, 8, 10, 12, 15, 20, 25, 30];
 
 // Reaching this many reps is the cue to move up a weight.
 export const needsHeavierWeight = (reps) => reps >= MAX_REPS;
@@ -9,6 +10,13 @@ export const needsHeavierWeight = (reps) => reps >= MAX_REPS;
 export const epley1RM = (weight, reps) => (reps === 1 ? weight : weight * (1 + reps / 30));
 
 export const weightForReps = (oneRM, reps) => (reps === 1 ? oneRM : oneRM / (1 + reps / 30));
+
+// Estimated weight you could lift for `target` reps, given a set of `reps` at `weight`.
+export const maxForReps = (weight, reps, target) => weightForReps(epley1RM(weight, reps), target);
+
+export const validateTarget = (target) => (Number.isSafeInteger(target) && target >= 1
+  ? null
+  : 'Enter a whole number of target reps, 1 or more.');
 
 export const repTable = (oneRM, repsList = TABLE_REPS) => repsList.map((reps) => ({
   reps,
