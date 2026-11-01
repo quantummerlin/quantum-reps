@@ -1,8 +1,10 @@
-import { MAX_WEIGHT } from './logger.js';
+import { MAX_REPS, MAX_WEIGHT } from './logger.js';
 import { fromKg, toKg } from './units.js';
 
-export const MAX_CALC_REPS = 30;
 export const TABLE_REPS = [5, 8, 10, 12, 15, 20, 25, 30];
+
+// Past this many reps the weight is too light to give a useful max estimate.
+export const needsHeavierWeight = (reps) => reps >= MAX_REPS;
 
 export const epley1RM = (weight, reps) => (reps === 1 ? weight : weight * (1 + reps / 30));
 
@@ -17,8 +19,8 @@ export function validateCalc({ weight, reps }) {
   if (!Number.isFinite(weight) || weight <= 0 || weight > MAX_WEIGHT) {
     return `Enter a weight above 0 (max ${MAX_WEIGHT} kg).`;
   }
-  if (!Number.isInteger(reps) || reps < 1 || reps > MAX_CALC_REPS) {
-    return `Enter reps between 1 and ${MAX_CALC_REPS}.`;
+  if (!Number.isSafeInteger(reps) || reps < 1) {
+    return 'Enter a whole number of reps, 1 or more.';
   }
   return null;
 }

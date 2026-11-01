@@ -450,6 +450,7 @@ input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; marg
 .calc-unit { font-family: var(--font-pixel); font-size: 11px; color: var(--text-dim); }
 .calc-note { min-height: 1.4em; color: var(--text-dim); font-size: 13px; }
 .calc-note.error { color: var(--red); }
+.calc-advice { max-width: 28ch; text-wrap: balance; }
 .calc-foot { text-align: center; }
 .targets { background: var(--surface); border: 1px solid var(--hairline); border-radius: var(--radius); padding: 2px 16px 10px; }
 .targets[hidden] { display: none; }

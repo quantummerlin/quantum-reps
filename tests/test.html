@@ -23,7 +23,7 @@
     import { journalEntries, groupByDay, dayLabel, recentExercises } from '../js/modules/journal.js';
     import { load, save, remove } from '../js/modules/storage.js';
     import { toKg, fromKg, formatWeight, convertField } from '../js/modules/units.js';
-    import { epley1RM, weightForReps, repTable, validateCalc, nearestHalf } from '../js/modules/calc.js';
+    import { epley1RM, weightForReps, repTable, validateCalc, nearestHalf, needsHeavierWeight } from '../js/modules/calc.js';
 
     const out = document.getElementById('out');
     let failed = 0;
@@ -144,7 +144,12 @@
     eq('calc valid', validateCalc({ weight: 80, reps: 10 }), null);
     eq('calc rejects zero weight', validateCalc({ weight: 0, reps: 10 }) !== null, true);
     eq('calc rejects zero reps', validateCalc({ weight: 80, reps: 0 }) !== null, true);
-    eq('calc rejects 31 reps', validateCalc({ weight: 80, reps: 31 }) !== null, true);
+    eq('calc allows 31 reps', validateCalc({ weight: 80, reps: 31 }), null);
+    eq('calc allows 500 reps', validateCalc({ weight: 80, reps: 500 }), null);
+    eq('calc rejects negative reps', validateCalc({ weight: 80, reps: -3 }) !== null, true);
+    eq('heavier suggested at 30', needsHeavierWeight(30), true);
+    eq('heavier suggested above 30', needsHeavierWeight(45), true);
+    eq('no suggestion at 29', needsHeavierWeight(29), false);
     eq('calc rejects fractional reps', validateCalc({ weight: 80, reps: 8.5 }) !== null, true);
     eq('nearestHalf kg down', nearestHalf(84.21, 'kg'), 84);
     eq('nearestHalf kg up', nearestHalf(33.3, 'kg'), 33.5);
