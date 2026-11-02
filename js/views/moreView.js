@@ -8,7 +8,7 @@ import { refresh } from '../nav.js';
 import { openGoalDialog } from './dialogs.js';
 import { $, viewTitle } from './shared.js';
 
-const VERSION = '0.3';
+const VERSION = '0.4';
 let status = '';
 
 const section = (title, ...children) => h('section', { class: 'card' }, h('h2', { class: 'label' }, title), ...children);
@@ -25,7 +25,7 @@ function exportBackup() {
     protein: protein.snapshot(),
   });
   const url = URL.createObjectURL(new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' }));
-  const link = h('a', { href: url, download: `quantum-reps-${protein.localDay()}.json` });
+  const link = h('a', { href: url, download: `rep-journal-${protein.localDay()}.json` });
   document.body.append(link);
   link.click();
   link.remove();
@@ -80,7 +80,7 @@ export function render() {
       h('ol', { class: 'steps' },
         h('li', {}, h('strong', {}, 'Pick one weight. '), 'Choose a load where you fail somewhere between 8 and 30 reps.'),
         h('li', {}, h('strong', {}, 'Fail three times. '), 'Do 3 sets to failure at that same weight.'),
-        h('li', {}, h('strong', {}, 'Log F1, F2, F3. '), 'Beat last session\'s volume (weight x total reps) to earn the trophy.'),
+        h('li', {}, h('strong', {}, 'Log F1, F2, F3. '), 'Beat last session\'s volume (weight x total reps) to set a new record.'),
         h('li', {}, h('strong', {}, 'Eat. '), 'Aim for 135 to 170 g of protein a day. Tap +25 at the top as you go.'))),
     section('YOUR DATA',
       h('p', { class: 'muted' }, 'Everything lives on this device only. Export a backup before clearing your browser data or switching phones.'),
@@ -90,5 +90,5 @@ export function render() {
         h('button', { class: 'btn btn-small btn-danger', type: 'button', onClick: resetAll }, 'ERASE ALL')),
       fileInput,
       h('p', { class: 'status', role: 'status' }, status)),
-    h('p', { class: 'muted about' }, `Quantum Reps v${VERSION}. No account, no tracking, no network calls.`));
+    h('p', { class: 'muted about' }, `Rep Journal v${VERSION}. No account, no tracking, no network calls.`));
 }

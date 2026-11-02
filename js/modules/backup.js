@@ -1,6 +1,8 @@
 import { sanitizeExercises, sanitizeProtein, sanitizeSettings } from './schema.js';
 
-export const BACKUP_APP = 'quantum-reps';
+export const BACKUP_APP = 'rep-journal';
+// The app was previously called quantum-reps; those backups must keep importing.
+const ACCEPTED_APPS = [BACKUP_APP, 'quantum-reps'];
 export const BACKUP_VERSION = 1;
 export const MAX_BACKUP_BYTES = 5_000_000;
 
@@ -26,8 +28,8 @@ export function parseBackup(text) {
   } catch {
     return { ok: false, error: 'That file is not valid JSON.' };
   }
-  if (!raw || raw.app !== BACKUP_APP || raw.version !== BACKUP_VERSION || !Array.isArray(raw.exercises)) {
-    return { ok: false, error: 'That file is not a Quantum Reps backup.' };
+  if (!raw || !ACCEPTED_APPS.includes(raw.app) || raw.version !== BACKUP_VERSION || !Array.isArray(raw.exercises)) {
+    return { ok: false, error: 'That file is not a Rep Journal backup.' };
   }
   return {
     ok: true,

@@ -1,5 +1,6 @@
 const SVG_NS = 'http://www.w3.org/2000/svg';
-const DOT = 6;
+const LINE = '#4F8CFF';
+const BEST = '#F5B84B';
 
 export function scalePoints(values, width, height, pad = 8) {
   if (!values.length) return [];
@@ -19,27 +20,22 @@ function node(tag, attrs) {
 }
 
 export function lineChart(values, { width = 320, height = 120, dots = true, label = 'Chart' } = {}) {
-  const svg = node('svg', {
-    viewBox: `0 0 ${width} ${height}`, class: 'chart', role: 'img', 'aria-label': label, 'shape-rendering': 'crispEdges',
-  });
+  const svg = node('svg', { viewBox: `0 0 ${width} ${height}`, class: 'chart', role: 'img', 'aria-label': label });
   for (const y of [8, height / 2, height - 8]) {
-    svg.append(node('line', { x1: 0, x2: width, y1: y, y2: y, stroke: '#5A5A8A', 'stroke-opacity': 0.3, 'stroke-width': 1 }));
+    svg.append(node('line', { x1: 0, x2: width, y1: y, y2: y, stroke: '#FFFFFF', 'stroke-opacity': 0.06, 'stroke-width': 1 }));
   }
   const points = scalePoints(values, width, height);
   if (points.length > 1) {
     svg.append(node('polyline', {
       points: points.map((p) => `${p.x},${p.y}`).join(' '),
-      fill: 'none', stroke: '#39FF14', 'stroke-width': 2, 'stroke-linejoin': 'miter',
+      fill: 'none', stroke: LINE, 'stroke-width': 2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round',
     }));
   }
   const best = Math.max(...values);
   points.forEach((p, index) => {
     const isLast = index === points.length - 1;
     if (!dots && !isLast) return;
-    svg.append(node('rect', {
-      x: p.x - DOT / 2, y: p.y - DOT / 2, width: DOT, height: DOT,
-      fill: values[index] === best ? '#FFD400' : '#39FF14',
-    }));
+    svg.append(node('circle', { cx: p.x, cy: p.y, r: 3, fill: values[index] === best ? BEST : LINE }));
   });
   return svg;
 }

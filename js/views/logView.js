@@ -214,9 +214,7 @@ function logForm() {
       : null,
     h('p', { class: 'muted' }, `3 sets to failure, same weight. Aim for ${MIN_REPS}-${MAX_REPS} reps.`),
     h('div', { class: 'sets' }, weightControl(), ...[0, 1, 2].map(repStepper)),
-    els.preview,
-    els.advice,
-    els.error,
+    h('div', { class: 'msgs' }, els.preview, els.advice, els.error),
     h('button', { class: 'btn btn-big', type: 'submit' }, 'LOG IT'),
     els.last);
 }

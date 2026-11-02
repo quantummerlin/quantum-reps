@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>QUANTUM REPS TESTS</title>
+  <title>REP JOURNAL TESTS</title>
   <style>
     body { font-family: monospace; background: #0B0B1A; color: #F4F4F4; padding: 16px; }
     .pass { color: #39FF14; }
@@ -10,7 +10,7 @@
   </style>
 </head>
 <body>
-  <h1>QUANTUM REPS TESTS</h1>
+  <h1>REP JOURNAL TESTS</h1>
   <pre id="out"></pre>
   <script type="module">
     import { volumeLoad, validateSession, weightAdvice } from '../js/modules/logger.js';
@@ -106,6 +106,8 @@
     const parsed = parseBackup(JSON.stringify(backup));
     eq('backup roundtrip ok', parsed.ok, true);
     eq('backup roundtrip exercises', parsed.data.exercises.length, 1);
+    eq('backup uses the Rep Journal id', backup.app, 'rep-journal');
+    eq('backup still accepts the old app id', parseBackup(JSON.stringify({ ...backup, app: 'quantum-reps' })).ok, true);
     eq('backup rejects garbage', parseBackup('{nope').ok, false);
     eq('backup rejects wrong app', parseBackup(JSON.stringify({ app: 'other', version: 1, exercises: [] })).ok, false);
     eq('backup rejects wrong version', parseBackup(JSON.stringify({ ...backup, version: 99 })).ok, false);
